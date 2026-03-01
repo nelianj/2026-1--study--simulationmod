@@ -1,0 +1,387 @@
+using DrWatson
+@quickactivate "project"
+
+using DifferentialEquations
+using DataFrames
+using StatsPlots
+using LaTeXStrings
+using Plots
+using BenchmarkTools
+using JLD2
+using CSV
+
+script_name = splitext(basename(PROGRAM_FILE))[1]
+mkpath(plotsdir(script_name))
+mkpath(datadir(script_name))
+
+function sir_model!(du, u, p, t)
+    S, I, R = u
+    β, c, γ = p
+    N = S + I + R
+    @inbounds begin
+        du[1] = -β * c * I * S / N
+        du[2] = β * c * I * S / N - γ * I
+        du[3] = γ * I
+    end
+    nothing
+end
+
+δt = 0.1
+tmax = 40.0
+tspan = (0.0, tmax)
+u0 = [990.0, 10.0, 0.0]
+base_params = [0.05, 10.0, 0.25]
+
+R0_base = (base_params[2] * base_params[1]) / base_params[3]
+
+println("="^60)
+println("МОДЕЛЬ SIR: Базовые параметры")
+println("="^60)
+println("β (вероятность заражения) = ", base_params[1])
+println("c (среднее число контактов) = ", base_params[2])
+println("γ (скорость выздоровления) = ", base_params[3])
+println("R₀ = c·β/γ = ", round(R0_base, digits=3))
+println("Средняя продолжительность болезни = ", round(1/base_params[3], digits=2), " дней")
+println("Начальные условия: S₀ = ", u0[1], ", I₀ = ", u0[2], ", R₀ = ", u0[3])
+
+prob_base = ODEProblem(sir_model!, u0, tspan, base_params)
+sol_base = solve(prob_base, dt = δt)
+
+df_base = DataFrame(Tables.table(sol_base'))
+rename!(df_base, ["S", "I", "R"])
+df_base[!, :t] = sol_base.t
+df_base[!, :N] = df_base.S + df_base.I + df_base.R
+
+plt1 = plot(df_base.t, [df_base.S df_base.I df_base.R],
+    label=[L"S(t)" L"I(t)" L"R(t)"],
+    xlabel="Время, дни",
+    ylabel="Количество людей",
+    title="Модель SIR: Базовая динамика",
+    linewidth=2,
+    legend=:right,
+    grid=true,
+    size=(800, 500))
+
+annotate!(plt1,
+    maximum(df_base.t) * 0.7,
+    maximum(df_base.N) * 0.8,
+    text("Базовые параметры:\nβ = $(base_params[1])\nc = $(base_params[2])\nγ = $(base_params[3])\nR₀ = $(round(R0_base, digits=2))",
+    8, :left))
+
+peak_idx = argmax(df_base.I)
+peak_time_base = df_base.t[peak_idx]
+peak_value_base = df_base.I[peak_idx]
+
+plt2 = plot(df_base.t, df_base.I,
+    label=L"I(t)",
+    xlabel="Время, дни",
+    ylabel="Количество инфицированных",
+    title="Динамика числа зараженных",
+    color=:red,
+    linewidth=2,
+    fill=(0, 0.3, :red),
+    grid=true,
+    size=(800, 400))
+
+vline!(plt2, [peak_time_base], color=:black, linestyle=:dash, label=false)
+annotate!(plt2, peak_time_base, peak_value_base * 1.05,
+    text("Пик: $(round(peak_value_base, digits=1))\nна $(round(peak_time_base, digits=1)) день", 8, :top))
+
+plt3 = plot(df_base.t, df_base.I,
+    label=L"I(t)",
+    xlabel="Время, дни",
+    ylabel="log(Инфицированные)",
+    title="Экспоненциальный рост (лог. шкала)",
+    yscale=:log10,
+    color=:red,
+    linewidth=2,
+    grid=true,
+    size=(800, 400))
+
+plt4 = plot(df_base.t,
+    [df_base.S df_base.I df_base.R] ./ df_base.N .* 100,
+    label=[L"S(t)/N" L"I(t)/N" L"R(t)/N"],
+    xlabel="Время, дни",
+    ylabel="Доля популяции, %",
+    title="Динамика эпидемии (в процентах)",
+    linewidth=2,
+    legend=:right,
+    grid=true,
+    size=(800, 500))
+
+if R0_base > 1
+    herd_immunity = (1 - 1/R0_base) * 100
+    hline!(plt4, [herd_immunity],
+        color=:purple,
+        linestyle=:dash,
+        label="Коллективный иммунитет ($(round(herd_immunity, digits=1))%)",
+        linewidth=1.5)
+end
+
+plt5 = plot(df_base.S, df_base.I,
+    label="Фазовая траектория",
+    xlabel=L"S(t)",
+    ylabel=L"I(t)",
+    title="Фазовый портрет SIR модели",
+    color=:blue,
+    linewidth=2,
+    grid=true,
+    size=(800, 500))
+
+for i in 1:50:length(df_base.S)-1
+    plot!(plt5,
+        [df_base.S[i], df_base.S[i+1]],
+        [df_base.I[i], df_base.I[i+1]],
+        arrow=:closed, color=:blue, alpha=0.5, label=false)
+end
+
+df_base[!, :Re] = R0_base .* df_base.S ./ df_base.N
+
+plt6 = plot(df_base.t, df_base.Re,
+    label=L"R_e(t)",
+    xlabel="Время, дни",
+    ylabel=L"R_e",
+    title="Эффективное репродуктивное число",
+    color=:green,
+    linewidth=2,
+    grid=true,
+    size=(800, 400))
+
+hline!(plt6, [1.0], color=:red, linestyle=:dash, label="Rₑ = 1", linewidth=1.5)
+
+println("\n" * "="^60)
+println("РЕЗУЛЬТАТЫ БАЗОВОГО ЭКСПЕРИМЕНТА")
+println("="^60)
+println("Пик эпидемии: I_max = $(round(peak_value_base, digits=1)) на $(round(peak_time_base, digits=1)) день")
+println("Итоговое число переболевших: R(∞) = $(round(df_base.R[end], digits=1))")
+println("Доля переболевших: $(round(df_base.R[end]/df_base.N[1]*100, digits=1))%")
+
+println("\n" * "="^60)
+println("ПАРАМЕТРИЧЕСКОЕ СКАНИРОВАНИЕ")
+println("="^60)
+
+function run_sir_experiment(params::Dict)
+    β = params[:β] # Извлекаем параметры
+    c = params[:c]
+    γ = params[:γ]
+    u0 = params[:u0]
+    tspan = params[:tspan]
+
+    p = [β, c, γ]
+
+    prob = ODEProblem(sir_model!, u0, tspan, p)# Создаём и решаем задачу
+    sol = solve(prob, Tsit5(), saveat=0.1)
+
+    df_temp = DataFrame(t=sol.t)# Анализируем результаты
+    df_temp.S = [u[1] for u in sol.u]
+    df_temp.I = [u[2] for u in sol.u]
+    df_temp.R = [u[3] for u in sol.u]
+
+    peak_idx = argmax(df_temp.I)
+    R0_val = (c * β) / γ
+
+    return Dict(
+        "solution" => sol,
+        "peak_time" => df_temp.t[peak_idx],
+        "peak_infected" => df_temp.I[peak_idx],
+        "final_recovered" => df_temp.R[end],
+        "R0" => R0_val,
+        "df" => df_temp
+    )
+end
+
+param_grid = Dict(
+    :β => [0.03, 0.05, 0.07, 0.10],     # вероятность заражения от 3% до 10%
+    :c => [5.0, 10.0, 15.0, 20.0],       # количество контактов в день
+    :γ => [0.2, 0.25, 0.33, 0.5],        # скорость выздоровления (1/γ = 5,4,3,2 дня)
+    :u0 => [[990.0, 10.0, 0.0]],          # начальные условия (фиксированы)
+    :tspan => [(0.0, 40.0)]               # время моделирования (фиксировано)
+)
+
+println("\nСоздание комбинаций параметров...")
+
+all_params = []
+for β in param_grid[:β]
+    for c in param_grid[:c]
+        for γ in param_grid[:γ]
+            push!(all_params, Dict(
+                :β => β,
+                :c => c,
+                :γ => γ,
+                :u0 => param_grid[:u0][1],
+                :tspan => param_grid[:tspan][1]
+            ))
+        end
+    end
+end
+
+println("Всего комбинаций параметров: ", length(all_params))
+println("\nИсследуемые значения:")
+println("  β: ", param_grid[:β])
+println("  c: ", param_grid[:c])
+println("  γ: ", param_grid[:γ])
+
+all_results = []
+
+for (i, params) in enumerate(all_params)
+    println("\nПрогресс: $i/$(length(all_params))")
+    println("  β = $(params[:β]), c = $(params[:c]), γ = $(params[:γ])")
+
+    data, path = produce_or_load(
+        datadir(script_name, "parametric_scan"),
+        params,
+        run_sir_experiment,
+        prefix = "sir_scan",
+        tag = false,
+        verbose = false
+    )
+
+    result_summary = merge(params, Dict(
+        :peak_time => data["peak_time"],
+        :peak_infected => data["peak_infected"],
+        :final_recovered => data["final_recovered"],
+        :R0 => data["R0"]
+    ))
+
+    push!(all_results, result_summary)
+end
+
+results_df = DataFrame(all_results)
+println("\n" * "="^60)
+println("СВОДНАЯ ТАБЛИЦА РЕЗУЛЬТАТОВ")
+println("="^60)
+println("Первые 10 строк:")
+println(first(results_df, 10))
+
+p_peak_vs_R0 = scatter(results_df.R0, results_df.peak_infected,
+    xlabel="Базовое репродуктивное число R₀",
+    ylabel="Пиковое число инфицированных",
+    title="Зависимость пика эпидемии от R₀",
+    color=:red,
+    markersize=4,
+    alpha=0.7,
+    grid=true,
+    label="Эксперименты")
+
+savefig(p_peak_vs_R0, plotsdir(script_name, "param_peak_vs_R0.png"))
+
+p_final_vs_R0 = scatter(results_df.R0, results_df.final_recovered,
+    xlabel="Базовое репродуктивное число R₀",
+    ylabel="Итоговое число переболевших",
+    title="Зависимость итогового числа переболевших от R₀",
+    color=:blue,
+    markersize=4,
+    alpha=0.7,
+    grid=true,
+    label="Эксперименты")
+
+savefig(p_final_vs_R0, plotsdir(script_name, "param_final_vs_R0.png"))
+
+p_time_vs_R0 = scatter(results_df.R0, results_df.peak_time,
+    xlabel="Базовое репродуктивное число R₀",
+    ylabel="Время достижения пика, дни",
+    title="Зависимость времени пика от R₀",
+    color=:purple,
+    markersize=4,
+    alpha=0.7,
+    grid=true,
+    label="Эксперименты")
+
+savefig(p_time_vs_R0, plotsdir(script_name, "param_time_vs_R0.png"))
+
+p_contacts = scatter(results_df.c, results_df.peak_infected,
+    xlabel="Количество контактов c",
+    ylabel="Пик инфекции",
+    title="Влияние количества контактов на пик эпидемии",
+    color=:green,
+    markersize=4,
+    alpha=0.7,
+    grid=true,
+    label="Эксперименты")
+
+savefig(p_contacts, plotsdir(script_name, "param_contacts_effect.png"))
+
+results_df[!, :herd_immunity_theory] = (1 .- 1 ./ results_df.R0) .* 100
+results_df[!, :actual_recovered_pct] = results_df.final_recovered ./ 1000 .* 100
+
+p_theory = scatter(results_df.R0, results_df.actual_recovered_pct,
+    xlabel="R₀",
+    ylabel="Доля переболевших, %",
+    title="Сравнение с теорией коллективного иммунитета",
+    color=:blue,
+    markersize=4,
+    label="Моделирование")
+
+R0_range = range(minimum(results_df.R0), maximum(results_df.R0), length=100)
+theoretical = (1 .- 1 ./ R0_range) .* 100
+plot!(p_theory, R0_range, theoretical,
+    color=:red,
+    linewidth=2,
+    linestyle=:dash,
+    label="Теория: 1 - 1/R₀")
+
+savefig(p_theory, plotsdir(script_name, "param_theory_comparison.png"))
+
+println("\n" * "="^60)
+println("АНАЛИЗ РЕЗУЛЬТАТОВ ПАРАМЕТРИЧЕСКОГО СКАНИРОВАНИЯ")
+println("="^60)
+
+println("\nСтатистика по всем экспериментам:")
+println("  Пик инфекции: от $(round(minimum(results_df.peak_infected), digits=1)) " *
+        "до $(round(maximum(results_df.peak_infected), digits=1))")
+println("  Время пика: от $(round(minimum(results_df.peak_time), digits=1)) " *
+        "до $(round(maximum(results_df.peak_time), digits=1)) дней")
+println("  R₀: от $(round(minimum(results_df.R0), digits=2)) " *
+        "до $(round(maximum(results_df.R0), digits=2))")
+
+worst = argmax(results_df.peak_infected)
+println("\n⚠️ НАИХУДШИЙ СЦЕНАРИЙ (максимальный пик):")
+println("  β = $(results_df.β[worst]), c = $(results_df.c[worst]), γ = $(results_df.γ[worst])")
+println("  R₀ = $(round(results_df.R0[worst], digits=2))")
+println("  Пик инфекции: $(round(results_df.peak_infected[worst], digits=1)) человек")
+println("  Итоговое число переболевших: $(round(results_df.final_recovered[worst], digits=1))")
+
+best = argmin(results_df.peak_infected)
+println("\n✅ НАИЛУЧШИЙ СЦЕНАРИЙ (минимальный пик):")
+println("  β = $(results_df.β[best]), c = $(results_df.c[best]), γ = $(results_df.γ[best])")
+println("  R₀ = $(round(results_df.R0[best], digits=2))")
+println("  Пик инфекции: $(round(results_df.peak_infected[best], digits=1)) человек")
+println("  Итоговое число переболевших: $(round(results_df.final_recovered[best], digits=1))")
+
+println("\n" * "="^60)
+println("СОХРАНЕНИЕ РЕЗУЛЬТАТОВ")
+println("="^60)
+
+savefig(plt1, plotsdir(script_name, "sir_dynamics.png"))
+savefig(plt2, plotsdir(script_name, "sir_infected.png"))
+savefig(plt3, plotsdir(script_name, "sir_log_scale.png"))
+savefig(plt4, plotsdir(script_name, "sir_percentages.png"))
+savefig(plt5, plotsdir(script_name, "sir_phase_portrait.png"))
+savefig(plt6, plotsdir(script_name, "sir_effective_R.png"))
+
+println("  📊 Графики базового эксперимента сохранены в: plots/$(script_name)/")
+
+@save datadir(script_name, "sir_results.jld2") df_base base_params R0_base peak_time_base peak_value_base
+println("  📁 Данные базового эксперимента сохранены в: data/$(script_name)/sir_results.jld2")
+
+CSV.write(datadir(script_name, "parameter_scan_results.csv"), results_df)
+println("  📋 Таблица результатов сканирования: data/$(script_name)/parameter_scan_results.csv")
+
+data_to_save = Dict(
+    "all_params" => all_params,
+    "all_results" => all_results,
+    "results_df" => results_df,
+    "param_grid" => param_grid
+)
+save(datadir(script_name, "sir_parameter_scan_complete.jld2"), data_to_save)
+println("  📁 Полные данные сканирования: data/$(script_name)/sir_parameter_scan_complete.jld2")
+
+println("\n" * "="^60)
+println("✅ МОДЕЛИРОВАНИЕ ЗАВЕРШЕНО УСПЕШНО!")
+println("="^60)
+println("\nВсего выполнено экспериментов: $(length(all_params) + 1)")
+println("  - Базовый эксперимент: 1")
+println("  - Параметрическое сканирование: $(length(all_params))")
+println("\nРезультаты сохранены в:")
+println("  📊 plots/$(script_name)/ - все графики")
+println("  📁 data/$(script_name)/ - все данные")
