@@ -6,6 +6,7 @@ using DataFrames
 using StatsPlots
 using LaTeXStrings
 using Plots
+gr(fmt=:png)
 using BenchmarkTools
 using JLD2
 using CSV

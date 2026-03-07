@@ -13,6 +13,7 @@ using DrWatson
 using DifferentialEquations  # Решение ОДУ
 using DataFrames             # Работа с данными
 using Plots                   # Визуализация
+gr(fmt=:png)
 using LaTeXStrings            # Красивые формулы
 using Statistics              # Статистический анализ
 using FFTW                    # Спектральный анализ
