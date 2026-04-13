@@ -479,8 +479,8 @@ SIR}\label{ux43aux43bux430ux441ux441ux438ux447ux435ux441ux43aux430ux44f-ux43cux4
 \ImportTok{using} \BuiltInTok{DrWatson}
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}
-\FunctionTok{gr}\NormalTok{()}
-\FunctionTok{default}\NormalTok{(show }\OperatorTok{=} \OperatorTok{:}\NormalTok{inline, fmt }\OperatorTok{=} \OperatorTok{:}\NormalTok{png)}
+\ImportTok{using} \BuiltInTok{Plots}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 \ImportTok{using} \BuiltInTok{JLD2}
 \end{Highlighting}
 \end{Shaded}
@@ -720,8 +720,6 @@ Int64[]
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-12-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-12-output-2.svg}
-
 Сохраняем график
 
 \begin{Shaded}
@@ -744,7 +742,6 @@ Int64[]
 \PreprocessorTok{@save} \FunctionTok{datadir}\NormalTok{(}\StringTok{"sir\_basic\_model.jld2"}\NormalTok{) model\_df}
 
 \FunctionTok{println}\NormalTok{(}\StringTok{"Данные сохранены"}\NormalTok{)}
-\ConstantTok{nothing}
 \end{Highlighting}
 \end{Shaded}
 
@@ -816,6 +813,7 @@ Int64[]
 \ImportTok{using} \BuiltInTok{DrWatson}
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 \ImportTok{using} \BuiltInTok{JLD2}
 \end{Highlighting}
 \end{Shaded}
@@ -1105,8 +1103,6 @@ Int64[]
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-26-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-26-output-2.svg}
-
 Сохраняем график
 
 \begin{Shaded}
@@ -1238,6 +1234,7 @@ Int64[]
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}\NormalTok{, }\BuiltInTok{CSV}\NormalTok{, }\BuiltInTok{Random}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 
 \FunctionTok{include}\NormalTok{(}\FunctionTok{srcdir}\NormalTok{(}\StringTok{"sir\_model.jl"}\NormalTok{))}
 \end{Highlighting}
@@ -1515,8 +1512,6 @@ run_experiment (generic function with 1 method)
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-36-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-36-output-2.svg}
-
 \begin{verbatim}
 Результаты сохранены в data/beta_scan_all.csv и plots/beta_scan.png
 \end{verbatim}
@@ -1589,6 +1584,7 @@ run_experiment (generic function with 1 method)
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}\NormalTok{, }\BuiltInTok{CSV}\NormalTok{, }\BuiltInTok{Random}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 
 \FunctionTok{include}\NormalTok{(}\FunctionTok{srcdir}\NormalTok{(}\StringTok{"sir\_model.jl"}\NormalTok{))}
 \end{Highlighting}
@@ -1976,6 +1972,7 @@ run_experiment (generic function with 1 method)
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}\NormalTok{, }\BuiltInTok{CSV}\NormalTok{, }\BuiltInTok{Random}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 
 \FunctionTok{include}\NormalTok{(}\FunctionTok{srcdir}\NormalTok{(}\StringTok{"sir\_model.jl"}\NormalTok{))}
 \end{Highlighting}
@@ -2145,8 +2142,6 @@ Dict{Symbol, Any} with 9 entries:
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-50-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-50-output-2.svg}
-
 \begin{verbatim}
 
 Diagram 1 saved: plots/city1_low_beta.png
@@ -2183,8 +2178,6 @@ Diagram 1 saved: plots/city1_low_beta.png
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-51-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-51-output-2.svg}
-
 \begin{verbatim}
 Diagram 2 saved: plots/city2_medium_beta.png
 \end{verbatim}
@@ -2219,8 +2212,6 @@ Diagram 2 saved: plots/city2_medium_beta.png
 \end{Shaded}
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-52-output-1.svg}
-
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-52-output-2.svg}
 
 \begin{verbatim}
 ✓ Diagram 3 saved: plots/city3_high_beta.png
@@ -2304,8 +2295,6 @@ Dict{Symbol, Any} with 9 entries:
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-55-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-55-output-2.svg}
-
 \begin{verbatim}
 
 Diagram 1 saved: plots/city1_low_beta.png
@@ -2341,8 +2330,6 @@ Diagram 1 saved: plots/city1_low_beta.png
 \end{Shaded}
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-56-output-1.svg}
-
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-56-output-2.svg}
 
 \begin{verbatim}
 Diagram 2 saved: plots/city2_medium_beta.png
@@ -2388,8 +2375,6 @@ Diagram 2 saved: plots/city2_medium_beta.png
 \end{Shaded}
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-57-output-1.svg}
-
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-57-output-2.svg}
 
 \begin{verbatim}
 ✓ Diagram 3 saved: plots/city3_high_beta.png
@@ -2478,6 +2463,7 @@ Diagram 2 saved: plots/city2_medium_beta.png
 \ImportTok{using} \BuiltInTok{DrWatson}
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}\NormalTok{, }\BuiltInTok{CSV}\NormalTok{, }\BuiltInTok{Random}\NormalTok{, }\BuiltInTok{Statistics}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 
 \FunctionTok{include}\NormalTok{(}\FunctionTok{srcdir}\NormalTok{(}\StringTok{"sir\_model.jl"}\NormalTok{))}
 \end{Highlighting}
@@ -2748,8 +2734,6 @@ seed для учёта стохастичности.
 \end{Highlighting}
 \end{Shaded}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-66-output-1.svg}
-
 \begin{verbatim}
 Результаты сохранены в data/migration_scan_all.csv и plots/migration_effect.png
 \end{verbatim}
@@ -2841,6 +2825,7 @@ seed для учёта стохастичности.
 \ImportTok{using} \BuiltInTok{DrWatson}
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}\NormalTok{, }\BuiltInTok{CSV}\NormalTok{, }\BuiltInTok{Random}\NormalTok{, }\BuiltInTok{Statistics}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 
 \FunctionTok{include}\NormalTok{(}\FunctionTok{srcdir}\NormalTok{(}\StringTok{"sir\_model.jl"}\NormalTok{))}
 \end{Highlighting}
@@ -3552,8 +3537,6 @@ Dict{Symbol, Any} with 10 entries:
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-81-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-81-output-2.svg}
-
 \begin{verbatim}
 "/home/nelianjovu/work/study/2026-1/2026-1==study--simulationmod/2026-1--study--simulationmod/labs/lab04/project/plots/quarantine_peak_time.png"
 \end{verbatim}
@@ -3579,8 +3562,6 @@ Dict{Symbol, Any} with 10 entries:
 \end{Shaded}
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-82-output-1.svg}
-
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-82-output-2.svg}
 
 \begin{verbatim}
 "/home/nelianjovu/work/study/2026-1/2026-1==study--simulationmod/2026-1--study--simulationmod/labs/lab04/project/plots/quarantine_peak_size.png"
@@ -3608,8 +3589,6 @@ Dict{Symbol, Any} with 10 entries:
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-83-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-83-output-2.svg}
-
 Добавляем линию для карантина 30\%
 
 \begin{Shaded}
@@ -3631,8 +3610,6 @@ Dict{Symbol, Any} with 10 entries:
 \end{Shaded}
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-84-output-1.svg}
-
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-84-output-2.svg}
 
 \begin{verbatim}
 "/home/nelianjovu/work/study/2026-1/2026-1==study--simulationmod/2026-1--study--simulationmod/labs/lab04/project/plots/quarantine_comparison.png"
@@ -3818,32 +3795,42 @@ cost_multi (generic function with 1 method)
 Starting optimization with optimizer DiffEvoOpt{FitPopulation{Float64}, SimpleSelector, BlackBoxOptim.AdaptiveDiffEvoRandBin{3}, RandomBound{ContinuousRectSearchSpace}}
 0.00 secs, 0 evals, 0 steps
 DE modify state:
-7.67 secs, 2 evals, 1 steps, improv/step: 1.000 (last = 1.0000), fitness=0.004222222
+12.03 secs, 2 evals, 1 steps, improv/step: 1.000 (last = 1.0000), fitness=1000.000000000
 DE modify state:
-26.68 secs, 4 evals, 2 steps, improv/step: 1.000 (last = 1.0000), fitness=0.004222222
+16.85 secs, 4 evals, 2 steps, improv/step: 1.000 (last = 1.0000), fitness=1000.000000000
 DE modify state:
-32.78 secs, 5 evals, 3 steps, improv/step: 0.667 (last = 0.0000), fitness=0.004222222
+18.90 secs, 7 evals, 4 steps, improv/step: 0.750 (last = 0.5000), fitness=0.000000000
 DE modify state:
-51.54 secs, 7 evals, 4 steps, improv/step: 0.750 (last = 1.0000), fitness=0.004222222
+23.84 secs, 9 evals, 5 steps, improv/step: 0.800 (last = 1.0000), fitness=0.000000000
 DE modify state:
-59.27 secs, 9 evals, 5 steps, improv/step: 0.800 (last = 1.0000), fitness=0.004222222
+25.53 secs, 11 evals, 6 steps, improv/step: 0.667 (last = 0.0000), fitness=0.000000000
+DE modify state:
+26.51 secs, 13 evals, 8 steps, improv/step: 0.750 (last = 1.0000), fitness=0.000000000
+DE modify state:
+41.78 secs, 15 evals, 9 steps, improv/step: 0.778 (last = 1.0000), fitness=0.000000000
+DE modify state:
+51.72 secs, 17 evals, 10 steps, improv/step: 0.800 (last = 1.0000), fitness=0.000000000
+DE modify state:
+52.73 secs, 19 evals, 11 steps, improv/step: 0.818 (last = 1.0000), fitness=0.000000000
+DE modify state:
+53.75 secs, 20 evals, 12 steps, improv/step: 0.750 (last = 0.0000), fitness=0.000000000
 DE modify state:
 
-Optimization stopped after 6 steps and 63.46 seconds
+Optimization stopped after 13 steps and 67.23 seconds
 Termination reason: Max time (60.0 s) reached
-Steps per second = 0.09
-Function evals per second = 0.17
+Steps per second = 0.19
+Function evals per second = 0.33
 Improvements/step = Inf
-Total function evaluations = 11
+Total function evaluations = 22
 
 
-Best candidate found: [0.149987, 9.27602, 0.0734177]
+Best candidate found: [0.157229, 8.23394, 0.0949412]
 
-Fitness: 0.000888889
+Fitness: 0.000000000
 \end{verbatim}
 
 \begin{verbatim}
-BlackBoxOptim.OptimizationResults("adaptive_de_rand_1_bin", "Max time (60.0 s) reached", 6, 1.775325590109846e9, 63.46448493003845, ParamsDictChain[ParamsDictChain[Dict{Symbol, Any}(:NumDimensions => 3, :MaxTime => 60.0, :SearchRange => [(0.1, 1.0), (3.0, 14.0), (0.01, 0.1)], :TraceMode => :none, :Method => :adaptive_de_rand_1_bin, :MaxFuncEvals => 0, :MaxSteps => 0, :PopulationSize => 20),Dict{Symbol, Any}()],Dict{Symbol, Any}(:CallbackInterval => -1.0, :TargetFitness => nothing, :TraceMode => :compact, :FitnessScheme => ScalarFitnessScheme{true}(), :MinDeltaFitnessTolerance => 1.0e-50, :NumDimensions => :NotSpecified, :FitnessTolerance => 1.0e-8, :TraceInterval => 0.5, :MaxStepsWithoutProgress => 10000, :MaxSteps => 10000…)], 11, ScalarFitnessScheme{true}(), BlackBoxOptim.TopListArchiveOutput{Float64, Vector{Float64}}(0.0008888888888888888, [0.1499872815535305, 9.276015132332892, 0.07341767096260449]), BlackBoxOptim.PopulationOptimizerOutput{FitPopulation{Float64}}(FitPopulation{Float64}([0.8510502853440417 0.9567459290089728 … 0.9902209350317313 0.1499872815535305; 11.440742448528745 13.845288300398522 … 9.296289268944808 9.276015132332892; 0.01979201240702558 0.04380412460591625 … 0.07024572464924622 0.07341767096260449], NaN, [NaN, 1000.0, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, NaN, 0.004222222222222222, 1000.0, NaN, NaN, NaN, NaN, NaN, 1000.0, NaN], 0, BlackBoxOptim.Candidate{Float64}[BlackBoxOptim.Candidate{Float64}([0.1499872815535305, 9.276015132332892, 0.07341767096260449], 20, 0.0008888888888888888, BlackBoxOptim.AdaptiveDiffEvoRandBin{3}(BlackBoxOptim.AdaptiveDiffEvoParameters(BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.65, σ=0.1), Distributions.Cauchy{Float64}(μ=1.0, σ=0.1), 0.5, false, true), BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.1, σ=0.1), Distributions.Cauchy{Float64}(μ=0.95, σ=0.1), 0.5, false, true), [0.6702416866808238, 0.969362766972783, 0.54698144215416, 0.6807751874500878, 0.7821812806241542, 0.6681254115257717, 1.0, 0.8683708758078881, 0.6513131014735265, 1.0, 1.0, 0.6147755924254479, 0.621509393012441, 0.42388569101359164, 0.7549016333595735, 0.8829681065577386, 0.7225541558998566, 0.9850678987687417, 0.6443120727206095, 0.6941657396609868], [0.29977084132383414, 1.0, 1.0, 0.064766722414528, 0.8669169598591087, 0.8264695588438555, 0.8603023197112094, 1.0, 0.9160326963596187, 0.08072910099733321, 0.9121382862927195, 1.0, 0.1089785772147602, 0.17827991760290043, 0.13569980414750246, 0.25223983057439003, 0.8512155105723048, 0.6143680681369716, 0.7081010856287089, 0.9525790196453883])), 0), BlackBoxOptim.Candidate{Float64}([0.23745850318197334, 13.736389400955401, 0.054209373448924576], 20, 1000.0, BlackBoxOptim.AdaptiveDiffEvoRandBin{3}(BlackBoxOptim.AdaptiveDiffEvoParameters(BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.65, σ=0.1), Distributions.Cauchy{Float64}(μ=1.0, σ=0.1), 0.5, false, true), BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.1, σ=0.1), Distributions.Cauchy{Float64}(μ=0.95, σ=0.1), 0.5, false, true), [0.6702416866808238, 0.969362766972783, 0.54698144215416, 0.6807751874500878, 0.7821812806241542, 0.6681254115257717, 1.0, 0.8683708758078881, 0.6513131014735265, 1.0, 1.0, 0.6147755924254479, 0.621509393012441, 0.42388569101359164, 0.7549016333595735, 0.8829681065577386, 0.7225541558998566, 0.9850678987687417, 0.6443120727206095, 0.6941657396609868], [0.29977084132383414, 1.0, 1.0, 0.064766722414528, 0.8669169598591087, 0.8264695588438555, 0.8603023197112094, 1.0, 0.9160326963596187, 0.08072910099733321, 0.9121382862927195, 1.0, 0.1089785772147602, 0.17827991760290043, 0.13569980414750246, 0.25223983057439003, 0.8512155105723048, 0.6143680681369716, 0.7081010856287089, 0.9525790196453883])), 0)], Base.Threads.SpinLock(0))))
+BlackBoxOptim.OptimizationResults("adaptive_de_rand_1_bin", "Max time (60.0 s) reached", 13, 1.775334295148341e9, 67.23150110244751, ParamsDictChain[ParamsDictChain[Dict{Symbol, Any}(:NumDimensions => 3, :MaxTime => 60.0, :SearchRange => [(0.1, 1.0), (3.0, 14.0), (0.01, 0.1)], :TraceMode => :none, :Method => :adaptive_de_rand_1_bin, :MaxFuncEvals => 0, :MaxSteps => 0, :PopulationSize => 20),Dict{Symbol, Any}()],Dict{Symbol, Any}(:CallbackInterval => -1.0, :TargetFitness => nothing, :TraceMode => :compact, :FitnessScheme => ScalarFitnessScheme{true}(), :MinDeltaFitnessTolerance => 1.0e-50, :NumDimensions => :NotSpecified, :FitnessTolerance => 1.0e-8, :TraceInterval => 0.5, :MaxStepsWithoutProgress => 10000, :MaxSteps => 10000…)], 22, ScalarFitnessScheme{true}(), BlackBoxOptim.TopListArchiveOutput{Float64, Vector{Float64}}(0.0, [0.15722949228924504, 8.233939084531034, 0.09494119642175618]), BlackBoxOptim.PopulationOptimizerOutput{FitPopulation{Float64}}(FitPopulation{Float64}([0.977478938532539 0.7874292055415524 … 0.2866954284119132 0.8947272606370639; 5.391996369956745 8.489238619895252 … 10.083091802107129 10.581333586341243; 0.012990774782420111 0.09654005353922351 … 0.046812557937241164 0.09269370148357477], NaN, [NaN, NaN, NaN, NaN, NaN, 1000.0, NaN, 1000.0, NaN, NaN, NaN, 0.0, 0.0, 0.0, 1000.0, 1000.0, NaN, NaN, NaN, NaN], 0, BlackBoxOptim.Candidate{Float64}[BlackBoxOptim.Candidate{Float64}([0.9466936246351442, 4.3337830848906, 0.05631501353614527], 16, 1000.0, BlackBoxOptim.AdaptiveDiffEvoRandBin{3}(BlackBoxOptim.AdaptiveDiffEvoParameters(BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.65, σ=0.1), Distributions.Cauchy{Float64}(μ=1.0, σ=0.1), 0.5, false, true), BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.1, σ=0.1), Distributions.Cauchy{Float64}(μ=0.95, σ=0.1), 0.5, false, true), [0.6551007338291316, 0.16953378789362467, 0.6382447868789556, 0.31190742778215524, 0.7238600076892279, 1.0, 0.8144211961752433, 1.0, 0.9765270090080724, 0.6080581695143009, 0.40968335372393794, 0.6757095505630982, 0.14762353391610916, 0.8271610320461629, 0.9645403279983206, 0.5351877875252933, 0.4523610016726574, 0.7261993450200346, 1.0, 0.6479716776199356], [0.22343399965238256, 0.901948637516552, 0.9950297292731218, 1.0, 0.9097268567191358, 0.9981764355284444, 0.07475104216957593, 0.5455511171667776, 0.2923014679934694, 0.9023490389146236, 0.1631088262777653, 1.0, 1.0, 0.9047142838868117, 0.056480290591938986, 0.08801841557449566, 0.8600649026871915, 0.7275612778445493, 0.11210779222839534, 1.0])), 0), BlackBoxOptim.Candidate{Float64}([0.9466936246351442, 13.007560726317019, 0.07973793471003728], 16, 1000.0, BlackBoxOptim.AdaptiveDiffEvoRandBin{3}(BlackBoxOptim.AdaptiveDiffEvoParameters(BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.65, σ=0.1), Distributions.Cauchy{Float64}(μ=1.0, σ=0.1), 0.5, false, true), BlackBoxOptim.BimodalCauchy(Distributions.Cauchy{Float64}(μ=0.1, σ=0.1), Distributions.Cauchy{Float64}(μ=0.95, σ=0.1), 0.5, false, true), [0.6551007338291316, 0.16953378789362467, 0.6382447868789556, 0.31190742778215524, 0.7238600076892279, 1.0, 0.8144211961752433, 1.0, 0.9765270090080724, 0.6080581695143009, 0.40968335372393794, 0.6757095505630982, 0.14762353391610916, 0.8271610320461629, 0.9645403279983206, 0.5351877875252933, 0.4523610016726574, 0.7261993450200346, 1.0, 0.6479716776199356], [0.22343399965238256, 0.901948637516552, 0.9950297292731218, 1.0, 0.9097268567191358, 0.9981764355284444, 0.07475104216957593, 0.5455511171667776, 0.2923014679934694, 0.9023490389146236, 0.1631088262777653, 1.0, 1.0, 0.9047142838868117, 0.056480290591938986, 0.08801841557449566, 0.8600649026871915, 0.7275612778445493, 0.11210779222839534, 1.0])), 0)], Base.Threads.SpinLock(0))))
 \end{verbatim}
 
 \section{Результаты
@@ -3864,10 +3851,10 @@ BlackBoxOptim.OptimizationResults("adaptive_de_rand_1_bin", "Max time (60.0 s) r
 
 \begin{verbatim}
 Оптимальные параметры (при пике < 30%):
-β_und = 0.15
-Время выявления = 9 дней
-Смертность = 0.0734
-Доля умерших: 0.09%
+β_und = 0.157
+Время выявления = 8 дней
+Смертность = 0.0949
+Доля умерших: 0.0%
 \end{verbatim}
 
 \section{Сохранение
@@ -3949,6 +3936,7 @@ BlackBoxOptim.OptimizationResults("adaptive_de_rand_1_bin", "Max time (60.0 s) r
 \ImportTok{using} \BuiltInTok{DrWatson}
 \PreprocessorTok{@quickactivate} \StringTok{"project"}
 \ImportTok{using} \BuiltInTok{Agents}\NormalTok{, }\BuiltInTok{DataFrames}\NormalTok{, }\BuiltInTok{Plots}\NormalTok{, }\BuiltInTok{CSV}
+\FunctionTok{gr}\NormalTok{(fmt}\OperatorTok{=:}\NormalTok{png)}
 
 \FunctionTok{include}\NormalTok{(}\FunctionTok{srcdir}\NormalTok{(}\StringTok{"sir\_model.jl"}\NormalTok{))}
 \end{Highlighting}
@@ -4033,8 +4021,6 @@ seed были рассчитаны показатели.
 
 \includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-92-output-1.svg}
 
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-92-output-2.svg}
-
 \section{Сохранение
 графика}\label{ux441ux43eux445ux440ux430ux43dux435ux43dux438ux435-ux433ux440ux430ux444ux438ux43aux430}
 
@@ -4046,8 +4032,6 @@ seed были рассчитаны показатели.
 \FunctionTok{savefig}\NormalTok{(}\FunctionTok{plotsdir}\NormalTok{(}\StringTok{"comprehensive\_analysis.png"}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
-
-\includesvg{simmod-lab04-report (Нджову Нелиа)_files/figure-pdf/cell-93-output-1.svg}
 
 \begin{verbatim}
 "/home/nelianjovu/work/study/2026-1/2026-1==study--simulationmod/2026-1--study--simulationmod/labs/lab04/project/plots/comprehensive_analysis.png"

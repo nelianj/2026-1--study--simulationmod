@@ -28,12 +28,13 @@ csl: _resources/csl/gost-r-7-0-5-2008-numeric.csl
 ## Formats
 format:
   ### Docx output format
-  docx:
-    toc: true
-    number-sections: true
-    toc-depth: 2
+ # docx:
+  #  toc: true
+   # number-sections: true
+    #toc-depth: 2
   ### Pdf output format
   pdf:
+    fig-format: png
     # pdf-engine: xelatex
     ### minted support
     # filters:
