@@ -1,0 +1,327 @@
+# # Исследование влияния миграции на динамику эпидемии
+#
+# **Цель:** Изучить, как интенсивность перемещения людей между городами влияет
+# на скорость распространения эпидемии (время достижения пика) и масштаб пика.
+# Инфекция начинается только в одном городе, остальные изначально здоровы.
+#
+# ## Подготовка окружения
+
+using DrWatson
+@quickactivate "project"
+using Agents, DataFrames, Plots, CSV, Random, Statistics
+gr(fmt=:png)
+
+include(srcdir("sir_model.jl"))
+
+# ## Функция для создания матрицы миграции
+#
+# Создаёт матрицу вероятностей миграции между городами на основе заданной интенсивности.
+# - **C**: количество городов
+# - **intensity**: вероятность миграции в другой город
+#
+# Вероятность остаться в текущем городе: 1 - intensity
+# Вероятность переехать в конкретный другой город: intensity / (C-1)
+
+function create_migration_matrix(C, intensity)
+    M = ones(C, C) .* intensity ./ (C-1)
+    for i = 1:C
+        M[i, i] = 1 - intensity
+    end
+    return M
+end
+
+# ## Функция для применения карантина
+#
+# Проверяет каждый город на превышение порога заболеваемости и закрывает его при необходимости.
+
+function apply_quarantine!(model, quarantine_active, threshold)
+    for city_id in 1:model.C
+        if quarantine_active[city_id]# Если город уже на карантине, пропускаем
+            continue
+        end
+        
+        current_pop = count(a.pos == city_id for a in allagents(model))# Считаем текущую заболеваемость в городе
+        if current_pop == 0
+            continue
+        end
+        
+        infected_count = count(a.status == :I && a.pos == city_id for a in allagents(model))
+        infected_pct = infected_count / current_pop
+        
+        if infected_pct > threshold# Если порог превышен, закрываем город
+            quarantine_active[city_id] = true
+            
+            model.migration_rates[city_id, :] .= 0# Обнуляем миграцию из города
+            model.migration_rates[:, city_id] .= 0# Обнуляем миграцию в город
+            model.migration_rates[city_id, city_id] = 1.0# Люди остаются на месте
+            
+            println("Город $city_id ЗАКРЫТ на карантин! (заболеваемость: $(round(infected_pct*100, digits=1))%)")
+        end
+    end
+end
+
+# ## Функция для измерения времени достижения пика
+#
+# Запускает симуляцию с заданной интенсивностью миграции и возвращает:
+# - **peak_time**: день, когда доля инфицированных достигла максимума
+# - **peak_value**: максимальная доля инфицированных
+
+function peak_time_with_quarantine(p)
+    migration_rates = create_migration_matrix(p[:C], p[:migration_intensity])# Создаём матрицу миграции на основе интенсивности
+    
+    model = initialize_sir(;
+        Ns = p[:Ns],
+        β_und = p[:β_und],
+        β_det = p[:β_det],
+        infection_period = p[:infection_period],
+        detection_time = p[:detection_time],
+        death_rate = p[:death_rate],
+        reinfection_probability = p[:reinfection_probability],
+        Is = p[:Is],
+        seed = p[:seed],
+        migration_rates = migration_rates,
+    )
+   
+    quarantine_active = [false, false, false]# Отслеживаем активный карантин для каждого города
+    
+    infected_frac(model) = count(a.status == :I for a in allagents(model)) / nagents(model)
+    peak = 0.0
+    peak_step = 0
+    
+    for step = 1:p[:n_steps]
+        apply_quarantine!(model, quarantine_active, p[:quarantine_threshold])# Применяем карантин перед шагом агентов
+        agent_ids = collect(allids(model))
+        for id in agent_ids
+            agent = try
+                model[id]
+            catch
+                nothing
+            end
+            if agent !== nothing
+                sir_agent_step!(agent, model)
+            end
+        end
+        
+        frac = infected_frac(model)
+        if frac > peak
+            peak = frac
+            peak_step = step
+        end
+    end
+    
+    return (peak_time = peak_step, peak_value = peak)
+end# Ручной пошаговый запуск симуляции
+
+# ## Функция для измерения времени достижения пика БЕЗ карантина
+#
+# Запускает симуляцию с заданной интенсивностью миграции без карантина.
+
+function peak_time_no_quarantine(p)
+    migration_rates = create_migration_matrix(p[:C], p[:migration_intensity])
+    
+    model = initialize_sir(;
+        Ns = p[:Ns],
+        β_und = p[:β_und],
+        β_det = p[:β_det],
+        infection_period = p[:infection_period],
+        detection_time = p[:detection_time],
+        death_rate = p[:death_rate],
+        reinfection_probability = p[:reinfection_probability],
+        Is = p[:Is],
+        seed = p[:seed],
+        migration_rates = migration_rates,
+    )
+    
+    infected_frac(model) = count(a.status == :I for a in allagents(model)) / nagents(model)
+    
+    peak = 0.0
+    peak_step = 0
+    
+    for step = 1:p[:n_steps]
+        agent_ids = collect(allids(model))
+        for id in agent_ids
+            agent = try
+                model[id]
+            catch
+                nothing
+            end
+            if agent !== nothing
+                sir_agent_step!(agent, model)
+            end
+        end
+        
+        frac = infected_frac(model)
+        if frac > peak
+            peak = frac
+            peak_step = step
+        end
+    end
+    
+    return (peak_time = peak_step, peak_value = peak)
+end
+
+# ЭКСПЕРИМЕНТ: СРАВНЕНИЕ С КАРАНТИНОМ И БЕЗ
+
+println("ЗАДАНИЕ 5: ИССЛЕДОВАНИЕ ЭФФЕКТИВНОСТИ КАРАНТИНА")
+
+# Параметры эксперимента
+base_params = Dict(
+    :C => 3,
+    :Ns => [1000, 1000, 1000],
+    :β_und => [0.5, 0.5, 0.5],
+    :β_det => [0.05, 0.05, 0.05],
+    :infection_period => 14,
+    :detection_time => 7,
+    :death_rate => 0.02,
+    :reinfection_probability => 0.1,
+    :Is => [1, 0, 0],
+    :n_steps => 150,
+)
+
+# Тестируем разные интенсивности миграции
+migration_intensities = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+seeds = [42, 43, 44]
+
+# Пороги карантина для тестирования
+quarantine_thresholds = [0.10, 0.20, 0.30, 0.40]  # 10%, 20%, 30%, 40%
+
+results_no_quarantine = []
+results_with_quarantine = Dict()
+
+println("\nЗапуск экспериментов БЕЗ карантина...")
+
+for mig in migration_intensities
+    for s in seeds
+        params = merge(base_params, Dict(
+            :migration_intensity => mig,
+            :seed => s,
+        ))
+        data = peak_time_no_quarantine(params)
+        push!(results_no_quarantine, merge(params, Dict(pairs(data))))
+        println("  БЕЗ карантина: mig = $mig, seed = $s, пик = день $(data.peak_time), размер = $(round(data.peak_value * 100, digits=1))%")
+    end
+end
+
+println("\nЗапуск экспериментов С КАРАНТИНОМ...")
+
+for threshold in quarantine_thresholds
+    results_with_quarantine[threshold] = []
+    for mig in migration_intensities
+        for s in seeds
+            params = merge(base_params, Dict(
+                :migration_intensity => mig,
+                :seed => s,
+                :quarantine_threshold => threshold,
+            ))
+            data = peak_time_with_quarantine(params)
+            push!(results_with_quarantine[threshold], merge(params, Dict(pairs(data))))
+            println("  С КАРАНТИНОМ ($(Int(threshold*100))%): mig = $mig, seed = $s, пик = день $(data.peak_time), размер = $(round(data.peak_value * 100, digits=1))%")
+        end
+    end
+end
+
+# РЕЗУЛЬТАТ
+
+# Усреднение результатов без карантина
+df_no_quarantine = DataFrame(results_no_quarantine)
+grouped_no_quarantine = combine(
+    groupby(df_no_quarantine, [:migration_intensity]),
+    :peak_time => mean => :mean_peak_time,
+    :peak_time => std => :std_peak_time,
+    :peak_value => mean => :mean_peak_value,
+    :peak_value => std => :std_peak_value,
+)
+
+# Усреднение результатов с карантином для каждого порога
+grouped_with_quarantine = Dict()
+for threshold in quarantine_thresholds
+    df_temp = DataFrame(results_with_quarantine[threshold])
+    grouped_with_quarantine[threshold] = combine(
+        groupby(df_temp, [:migration_intensity]),
+        :peak_time => mean => :mean_peak_time,
+        :peak_time => std => :std_peak_time,
+        :peak_value => mean => :mean_peak_value,
+        :peak_value => std => :std_peak_value,
+    )
+end
+
+# ВИЗУАЛИЗАЦИЯ
+# График 1: Сравнение времени пика (фиксированная миграция 0.3)
+fixed_mig = 0.3
+
+# Находим данные для миграции 0.3 без карантина
+row_no = grouped_no_quarantine[findfirst(==(fixed_mig), grouped_no_quarantine.migration_intensity), :]
+
+# Собираем данные для миграции 0.3 с разными порогами карантина
+peak_times = Float64[]
+peak_sizes = Float64[]
+threshold_labels = ["Без карантина"]
+
+push!(peak_times, row_no.mean_peak_time)
+push!(peak_sizes, row_no.mean_peak_value * 100)
+
+for threshold in quarantine_thresholds
+    row = grouped_with_quarantine[threshold][findfirst(==(fixed_mig), grouped_with_quarantine[threshold].migration_intensity), :]
+    push!(peak_times, row.mean_peak_time)
+    push!(peak_sizes, row.mean_peak_value * 100)
+    push!(threshold_labels, "$(Int(threshold*100))% карантин")
+end
+
+# График времени пика
+plot_peak_time = bar(
+    threshold_labels,
+    peak_times,
+    title = "Влияние карантина на время пика (миграция = $fixed_mig)",
+    xlabel = "Сценарий",
+    ylabel = "Время до пика (дни)",
+    color = :steelblue,
+    legend = false,
+    grid = true,
+)
+
+display(plot_peak_time)
+savefig(plotsdir("quarantine_peak_time.png"))
+
+# График размера пика
+plot_peak_size = bar(
+    threshold_labels,
+    peak_sizes,
+    title = "Влияние карантина на размер пика (миграция = $fixed_mig)",
+    xlabel = "Сценарий",
+    ylabel = "Размер пика (% населения)",
+    color = :coral,
+    legend = false,
+    grid = true,
+)
+
+display(plot_peak_size)
+savefig(plotsdir("quarantine_peak_size.png"))
+
+# График 2: Зависимость времени пика от миграции (сравнение без карантина и с карантином 30%)
+plot_comparison = plot(
+    grouped_no_quarantine.migration_intensity,
+    grouped_no_quarantine.mean_peak_time,
+    marker = :circle,
+    label = "Без карантина",
+    xlabel = "Интенсивность миграции",
+    ylabel = "Время до пика (дни)",
+    title = "Сравнение: с карантином и без",
+    linewidth = 2,
+    color = :blue,
+    grid = true,
+)
+
+# Добавляем линию для карантина 30%
+row_quarantine = grouped_with_quarantine[0.30]
+plot!(
+    plot_comparison,
+    row_quarantine.migration_intensity,
+    row_quarantine.mean_peak_time,
+    marker = :square,
+    label = "Карантин при 30%",
+    linewidth = 2,
+    color = :red,
+)
+
+display(plot_comparison)
+savefig(plotsdir("quarantine_comparison.png"))

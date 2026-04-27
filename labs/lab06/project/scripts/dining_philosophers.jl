@@ -1,0 +1,39 @@
+# ## Базовые эксперименты
+#
+# **Зачем нужен**
+# Скрипт выполняет основное моделирование и сравнение двух вариантов сети Петри: классическая модель (без арбитра), в которой возможна взаимная блокировка (deadlock) и  модифицированная модель с арбитром, которая должна предотвращать deadlock.
+
+using DrWatson
+@quickactivate "project"
+include(srcdir("DiningPhilosophers.jl"))
+using .DiningPhilosophers
+using DataFrames, CSV, Plots
+
+# Создаем классическую сеть Петри для N=5 философов с помощью build_classical_network. Запускаем стохастическую симуляцию (алгоритм Гиллеспи) на время tmax = 50.0. 
+
+N = 5
+tmax = 50.0
+
+println("=== Классическая сеть (без арбитра) ===")
+net_classic, u0_classic, _ = build_classical_network(N)
+df_classic = simulate_stochastic(net_classic, u0_classic, tmax)
+# Сохраняем полную историю маркировок в CSV-файл (dining_classic.csv).
+CSV.write(datadir("dining_classic.csv"), df_classic)
+
+# Анализируем последнее состояние на предмет deadlock с помощью detect_deadlock и выводит результат в консоль.
+dead = detect_deadlock(df_classic, net_classic)
+println("Deadlock обнаружен: $dead")
+
+# Строим графики эволюции маркировки по всем позициям (Think, Hungry, Eat, Fork) и сохраняет их как classic_simulation.png.
+plot_classic = plot_marking_evolution(df_classic, N)
+savefig(plotsdir("classic_simulation.png"))
+
+# Повторяем для сети с арбитром (build_arbiter_network), сохраняя результаты в dining_arbiter.csv и arbiter_simulation.png.
+println("\n=== Сеть с арбитром ===")
+net_arb, u0_arb, _ = build_arbiter_network(N)
+df_arb = simulate_stochastic(net_arb, u0_arb, tmax)
+CSV.write(datadir("dining_arbiter.csv"), df_arb)
+dead_arb = detect_deadlock(df_arb, net_arb)
+println("Deadlock обнаружен: $dead_arb")
+plot_arb = plot_marking_evolution(df_arb, N)
+savefig(plotsdir("arbiter_simulation.png"))
