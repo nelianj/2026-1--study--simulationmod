@@ -1,0 +1,47 @@
+## Анимация процесса
+**Зачем нужен:** Для наглядной демонстрации динамики работы сети Петри во времени и Анимация позволяет увидеть, как меняется маркировка (фишки) в каждой позиции, и особенно наглядно показывает возникновение deadlock в классической модели.
+
+```{julia}
+using DrWatson
+@quickactivate "project"
+include(srcdir("DiningPhilosophers.jl"))
+using .DiningPhilosophers
+using Plots, Random
+```
+
+Берёт классическую сеть (для малого числа философов (N=3) для упрощения визуализации). Запускает стохастическую симуляцию на tmax = 30.0.
+
+```{julia}
+N = 3
+tmax = 30.0
+net, u0, names = build_classical_network(N)
+
+Random.seed!(123)
+df = simulate_stochastic(net, u0, tmax)
+```
+
+Создаёт анимацию с помощью макроса @animate, где каждый кадр – это столбчатая диаграмма текущей маркировки (количество фишек в каждой позиции)
+
+```{julia}
+anim = @animate for row in eachrow(df)
+    u = [row[col] for col in propertynames(row) if col != :time]
+    bar(
+        1:length(u),
+        u,
+        legend = false,
+        ylims = (0, maximum(u0) + 1),
+        xlabel = "Позиция",
+        ylabel = "Фишки",
+        title = "Время = $(round(row.time, digits=2))",
+    )
+    xticks!(1:length(u), string.(names), rotation = 45)
+end
+```
+
+Сохраняет анимацию как GIF-файл philosophers_simulation.gif с частотой 5 кадров в секунду.
+
+```{julia}
+gif(anim, plotsdir("philosophers_simulation.gif"), fps = 2)
+println("Анимация сохранена в plots/philosophers_simulation.gif")
+```
+

@@ -1,0 +1,53 @@
+# ## Базовый прогон модели SIR (Petri nets)
+#
+using DrWatson
+@quickactivate "project"
+using Random
+include(srcdir("SIRPetri.jl"))
+using .SIRPetri
+using DataFrames, CSV, Plots
+
+# Выполняет базовые эксперименты с разными параметрами β и γ.
+
+# Параметры для трёх экспериментов
+experiments = [
+    (β = 0.1, γ = 0.05, name = "0"),
+    (β = 0.5, γ = 0.1, name = "1"),
+    (β = 1.0, γ = 0.2, name = "2")
+]
+
+tmax = 100.0
+
+#
+
+for exp in experiments
+    β, γ, name = exp.β, exp.γ, exp.name
+    println("\nЭксперимент $name: β = $β, γ = $γ, R₀ = $(β/γ)")
+    net, u0, states = build_sir_network(β, γ) # Создаём сеть Петри для SIR модели
+ 
+    df_det = simulate_deterministic(
+        net, u0, (0.0, tmax), 
+        saveat = 0.5, 
+        rates = [β, γ]
+    )# Детерминированная симуляция (решение ОДУ)
+    
+    Random.seed!(123)
+    df_stoch = simulate_stochastic(
+        net, u0, (0.0, tmax), 
+        rates = [β, γ]
+    )# Стохастическая симуляция (алгоритм Гиллеспи)
+    
+    CSV.write(datadir("sir_det_$name.csv"), df_det) 
+    CSV.write(datadir("sir_stoch_$name.csv"), df_stoch)
+    
+    p_det = plot_sir(df_det) # Строим и сохраняем графики
+    title!(p_det, "SIR детерминированный (β=$β, γ=$γ)")
+    savefig(plotsdir("sir_det_dynamics_$name.png"))
+
+    p_stoch = plot_sir(df_stoch)
+    title!(p_stoch, "SIR стохастический (β=$β, γ=$γ)")
+    savefig(plotsdir("sir_stoch_dynamics_$name.png"))
+    
+end
+
+println("\nБазовый прогон завершён. Результаты в data/ и plots/")
