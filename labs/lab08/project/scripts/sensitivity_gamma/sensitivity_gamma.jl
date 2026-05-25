@@ -1,0 +1,64 @@
+using DrWatson
+@quickactivate "project"
+include(srcdir("Sir_model.jl"))
+using Random, StatsPlots, DataFrames, CSV
+
+tmax = 60.0  # Увеличиваем время, так как при малых γ эпидемия длится дольше
+u0 = [990, 10, 0]  # S, I, R
+β_fixed = 0.05
+c_fixed = 10.0
+Random.seed!(1234)
+
+γs = [0.05, 0.1, 0.125, 0.1667, 0.2, 0.25, 0.333, 0.5, 1.0, 2.0]
+
+results_γ = []
+
+for γ in γs
+    p = [β_fixed, c_fixed, γ]
+    model = MakeSIRModel(u0, p)
+    activate(model)
+    sir_run(model, tmax)
+    data = out(model)
+
+    peak_I = maximum(data.I)# Вычисляем ключевые метрики
+    peak_time = data.t[argmax(data.I)]
+    final_R = data.R[end]
+    final_S = data.S[end]
+    total_events = length(data.t)
+    R0 = (c_fixed * β_fixed) / γ
+    illness_duration = 1/γ
+
+    push!(results_γ, (γ=γ, illness_duration=illness_duration, R0=R0,
+                      peak_I=peak_I, peak_time=peak_time,
+                      final_S=final_S, final_R=final_R, events=total_events))
+
+    println("γ = $γ (болезнь = $(round(illness_duration, digits=1)) дн): " *
+            "Пик I = $(round(peak_I, digits=1)), " *
+            "Время пика = $(round(peak_time, digits=1)), " *
+            "Финальное R = $(round(final_R, digits=1))")
+end
+
+df_γ = DataFrame(results_γ)
+CSV.write(datadir("sensitivity_gamma.csv"), df_γ)
+
+p1 = plot(df_γ.γ, df_γ.peak_I,
+          markershape = :circle, markersize = 6, color = :blue,
+          xlabel = "γ (скорость выздоровления)",
+          ylabel = "Пик инфицированных",
+          title = "Зависимость пика эпидемии от скорости выздоровления",
+          linewidth = 2,
+          label = "Пик I")
+
+savefig(plotsdir("sensitivity_gamma_peak.png"))
+display(p1)
+
+p2 = plot(df_γ.illness_duration, df_γ.peak_I,
+          markershape = :circle, markersize = 6, color = :red,
+          xlabel = "Средняя длительность болезни (дни)",
+          ylabel = "Пик инфицированных",
+          title = "Зависимость пика эпидемии от длительности болезни",
+          linewidth = 2,
+          label = "Пик I")
+
+savefig(plotsdir("sensitivity_gamma_peak_vs_duration.png"))
+display(p2)

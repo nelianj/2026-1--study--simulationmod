@@ -1,0 +1,51 @@
+## Модель SIR
+
+Модель создается, процессы активируются, и запуск выполняется. Результат преобразуется во фрейм данных. График с кривыми S, I, R создается и сохраняется
+
+```{julia}
+using Pkg
+Pkg.activate("/home/nelianjovu/work/study/2026-1/2026-1==study--simulationmod/2026-1--study--simulationmod/labs/lab08/project_vacc")
+
+
+using DrWatson
+@quickactivate "project"
+include(srcdir("Sir_model_vacc.jl"))
+
+using StatsPlots
+```
+
+Параметры модели
+
+```{julia}
+tmax = 100.0
+u0 = [990, 10, 0]
+p = [0.05, 10.0, 0.25]
+vaccination_time = 10.0
+vaccination_fraction = 0.5
+```
+
+Запуск модели
+
+```{julia}
+des_model = MakeSIRModel(u0, p, seed=42)
+activate(des_model)
+@process vaccinate(des_model.sim, des_model, vaccination_time, vaccination_fraction)
+sir_run(des_model, tmax)
+data_vacc = out(des_model)
+```
+
+Визуализация
+
+```{julia}
+@df data_vacc plot(
+    :t,
+    [:S :I :R],
+    labels = ["S" "I" "R"],
+    xlab = "Time",
+    ylab = "Population",
+    title = "SIR Model with Vaccination ($(vaccination_fraction*100)% at t=$vaccination_time)"
+)
+vline!([vaccination_time], label="Vaccination start", linestyle=:dash)
+savefig(plotsdir("sir_des_vaccination.png"))
+```
+

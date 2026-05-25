@@ -1,0 +1,246 @@
+using DrWatson
+@quickactivate "project"
+
+using Agents, DataFrames, Plots, CSV, Random
+gr(fmt=:png)
+
+include(srcdir("sir_model.jl"))
+
+function run_heterogeneous_experiment(p)
+    β_und = p[:β_und]
+    β_det = β_und ./ 10  # β_det в 10 раз меньше β_und для каждого города
+
+    model = initialize_sir(;
+        Ns = p[:Ns],
+        β_und = β_und,
+        β_det = β_det,
+        infection_period = p[:infection_period],
+        detection_time = p[:detection_time],
+        death_rate = p[:death_rate],
+        reinfection_probability = p[:reinfection_probability],
+        Is = p[:Is],
+        seed = p[:seed],
+        n_steps = p[:n_steps],
+    )
+
+    function infected_fraction_in_city(model, city_id)
+        current_pop = count(a.pos == city_id for a in allagents(model))
+        infected_count = count(a.status == :I && a.pos == city_id for a in allagents(model))
+        if current_pop == 0
+            return 0.0
+        end
+        return infected_count / current_pop
+    end
+
+    time_points = Int[]# Массивы для записи всей динамики
+    city1_infected = Float64[]
+    city2_infected = Float64[]
+    city3_infected = Float64[]
+
+    for step = 1:p[:n_steps]
+        agent_ids = collect(allids(model))
+        for id in agent_ids
+            agent = try
+                model[id]
+            catch
+                nothing
+            end
+            if agent !== nothing
+                sir_agent_step!(agent, model)
+            end
+        end
+
+        push!(time_points, step)# Записываем данные на каждом шаге
+        frac1 = infected_fraction_in_city(model, 1)
+        frac2 = infected_fraction_in_city(model, 2)
+        frac3 = infected_fraction_in_city(model, 3)
+
+        push!(city1_infected, frac1)
+        push!(city2_infected, frac2)
+        push!(city3_infected, frac3)
+
+    end
+
+    return (
+        time_points = time_points,
+        city1_infected = city1_infected,
+        city2_infected = city2_infected,
+        city3_infected = city3_infected,
+    )
+end
+
+params = Dict(
+    :Ns => [1000, 1000, 1000],
+    :β_und => [0.2, 0.5, 0.8],  # Город 1: низкий β, Город 2: средний, Город 3: высокий
+    :infection_period => 14,
+    :detection_time => 7,
+    :death_rate => 0.02,
+    :reinfection_probability => 0.1,
+    :Is => [1, 0, 0],  # Заражение начинается только в Городе 1 (с низким β)
+    :seed => 42,
+    :n_steps => 100,
+)
+
+results = run_heterogeneous_experiment(params)
+
+plot1 = plot(
+    results.time_points,
+    results.city1_infected .* 100,
+    label = "город 1 (β = 0.2)",
+    xlabel = "Дни",
+    ylabel = "инфицированные (%)",
+    title = "График 1: город 1 - Низкий уровень инфицирования",
+    linewidth = 3,
+    color = :blue,
+    fill = (0, 0.3, :blue),
+    grid = true,
+)
+
+peak1 = maximum(results.city1_infected) * 100 # Добавить пиковую аннотацию
+peak1_day = argmax(results.city1_infected)
+annotate!(plot1, peak1_day, peak1 + 2, text("Peak: $(round(peak1, digits=1))%", 10, :blue))
+
+vline!([peak1_day], color = :black, alpha = 0.5, label = "Пик (день $peak1_day)")# Добавить вертикальную линию на день пика
+
+display(plot1)
+savefig(plotsdir("sir_scan_beta_q3-1.png"))
+println("\nDiagram 1 saved: plots/city1_low_beta.png")
+
+plot2 = plot(
+    results.time_points,
+    results.city2_infected .* 100,
+    label = "город 2 (β = 0.5)",
+    xlabel = "Дни",
+    ylabel = "инфицированные (%)",
+    title = "График 2: город 2 - Средний уровень инфицирования",
+    linewidth = 3,
+    color = :green,
+    fill = (0, 0.3, :green),
+    grid = true,
+)
+
+peak2 = maximum(results.city2_infected) * 100# Добавить пиковую аннотацию
+peak2_day = argmax(results.city2_infected)
+annotate!(plot2, peak2_day, peak2 + 2, text("Peak: $(round(peak2, digits=1))%", 10, :green))
+
+vline!([peak2_day], color = :black, alpha = 0.5, label = "Пик (день $peak2_day)")# Добавить вертикальную линию на день пика
+
+display(plot2)
+savefig(plotsdir("sir_scan_beta_q3-2.png"))
+println("Diagram 2 saved: plots/city2_medium_beta.png")
+
+plot3 = plot(
+    results.time_points,
+    results.city3_infected .* 100,
+    label = "город 3 (β = 0.8)",
+    xlabel = "Дни",
+    ylabel = "инфицированные (%)",
+    title = "График 3: город 3 - Высокий уровень инфицирования",
+    linewidth = 3,
+    color = :red,
+    fill = (0, 0.3, :red),
+    grid = true,
+)
+
+peak3 = maximum(results.city3_infected) * 100# Добавить пиковую аннотацию
+peak3_day = argmax(results.city3_infected)
+annotate!(plot3, peak3_day, peak3 + 2, text("Peak: $(round(peak3, digits=1))%", 10, :red))
+
+vline!([peak3_day], color = :black, alpha = 0.5, label = "Пик (день $peak3_day)")# Добавить вертикальную линию на день пика
+
+display(plot3)
+savefig(plotsdir("sir_scan_beta_q3-3.png"))
+println("✓ Diagram 3 saved: plots/city3_high_beta.png")
+
+param1 = Dict(
+    :Ns => [1000, 1000, 1000],
+    :β_und => [0.8, 0.5, 0.2],  # Город 3: низкий β, Город 2: средний, Город 1: высокий
+    :infection_period => 14,
+    :detection_time => 7,
+    :death_rate => 0.02,
+    :reinfection_probability => 0.1,
+    :Is => [1, 0, 0],  # Заражение начинается только в Городе 1 (с высоким β)
+    :seed => 42,
+    :n_steps => 100,
+)
+
+results1 = run_heterogeneous_experiment(param1)
+
+plot1 = plot(
+    results1.time_points,
+    results1.city1_infected .* 100,
+    label = "город 1 (β = 0.8)",
+    xlabel = "Дни",
+    ylabel = "инфицированные (%)",
+    title = "График 1: город 1 - Высокий уровень инфицирования",
+    linewidth = 3,
+    color = :blue,
+    fill = (0, 0.3, :blue),
+    grid = true,
+)
+
+peak1 = maximum(results1.city1_infected) * 100# Добавить пиковую аннотацию
+peak1_day = argmax(results1.city1_infected)
+annotate!(plot1, peak1_day, peak1 + 2, text("Peak: $(round(peak1, digits=1))%", 10, :blue))
+
+vline!([peak1_day], color = :black, alpha = 0.5, label = "Пик (день $peak1_day)")# Добавить вертикальную линию на день пика
+
+display(plot1)
+savefig(plotsdir("sir_scan_beta_q3-1-1.png"))
+println("\nDiagram 1 saved: plots/city1_low_beta.png")
+
+plot2 = plot(
+    results1.time_points,
+    results1.city2_infected .* 100,
+    label = "город 2 (β = 0.5)",
+    xlabel = "Дни",
+    ylabel = "инфицированные (%)",
+    title = "График 2: город 2 - Средний уровень инфицирования",
+    linewidth = 3,
+    color = :green,
+    fill = (0, 0.3, :green),
+    grid = true,
+)
+
+peak2 = maximum(results1.city2_infected) * 100# Добавить пиковую аннотацию
+peak2_day = argmax(results1.city2_infected)
+annotate!(plot2, peak2_day, peak2 + 2, text("Peak: $(round(peak2, digits=1))%", 10, :green))
+
+vline!([peak2_day], color = :black, alpha = 0.5, label = "Пик (день $peak2_day)")# Добавить вертикальную линию на день пика
+
+display(plot2)
+savefig(plotsdir("sir_scan_beta_q3-2-2.png"))
+println("Diagram 2 saved: plots/city2_medium_beta.png")
+
+plot3 = plot(
+    results1.time_points,
+    results1.city3_infected .* 100,
+    label = "город 3 (β = 0.2)",
+    xlabel = "Дни",
+    ylabel = "инфицированные (%)",
+    title = "График 3: город 3 - Низкий уровень инфицирования",
+    linewidth = 3,
+    color = :red,
+    fill = (0, 0.3, :red),
+    grid = true,
+)
+
+peak3 = maximum(results1.city3_infected) * 100# Добавить пиковую аннотацию
+peak3_day = argmax(results1.city3_infected)
+annotate!(plot3, peak3_day, peak3 + 2, text("Peak: $(round(peak3, digits=1))%", 10, :red))
+
+vline!([peak3_day], color = :black, alpha = 0.5, label = "Пик (день $peak3_day)")# Добавить вертикальную линию на день пика
+
+display(plot3)
+savefig(plotsdir("sir_scan_beta_q3-3-3.png"))
+println("✓ Diagram 3 saved: plots/city3_high_beta.png")
+
+println("СРАВНЕНИЕ ПИКОВ")
+println("Эксперимент 1 (начните в городе 1 с β=0.2):")
+println("  город 1 (β=0.2): пиковый день = $(argmax(results.city1_infected))")
+println("  город 2 (β=0.5): пиковый день = $(argmax(results.city2_infected))")
+println("  город 3 (β=0.8): пиковый день = $(argmax(results.city3_infected))")
+println("\nЭксперимент 2 (начните в городе 1 с β=0.8):")
+println("  город 1 (β=0.8): пиковый день = $(argmax(results1.city1_infected))")
+println("  город 2 (β=0.5): пиковый день = $(argmax(results1.city2_infected))")
+println("  город 3 (β=0.2): пиковый день = $(argmax(results1.city3_infected))")
